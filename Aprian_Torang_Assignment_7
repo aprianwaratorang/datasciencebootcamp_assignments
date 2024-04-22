@@ -1,0 +1,68 @@
+import pandas as pd
+import numpy as np
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler, OneHotEncoder
+
+# Load the CSV file
+df = pd.read_csv(r"C:\Users\apria\OneDrive\Documents\01 NYU\Data Science Bootcamp\employee.csv")
+df.columns
+
+null_values = df.isnull().sum()
+print(null_values)
+
+df_cleaned = df.dropna()
+print(df_cleaned)
+null_values_2 = df_cleaned.isnull().sum()
+print(null_values_2)  
+
+# Identify numeric columns (adjust the list as necessary based on your actual data)
+numeric_cols = df_cleaned.select_dtypes(include=['float64', 'int64']).columns
+
+# Apply StandardScaler only to numeric columns
+scaler = StandardScaler()
+df_cleaned[numeric_cols] = scaler.fit_transform(df_cleaned[numeric_cols])
+
+# Now you can safely drop 'salary' and create feature and target datasets
+X = df_cleaned.drop('salary', axis=1)
+y = df_cleaned['salary']
+
+# Split into training and testing sets
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.25, random_state=42)
+
+
+X_train['timestamp'] = pd.to_datetime(X_train['timestamp'])
+X_train['year'] = X_train['timestamp'].dt.year
+X_train['month'] = X_train['timestamp'].dt.month
+X_train['day'] = X_train['timestamp'].dt.day
+X_train.drop('timestamp', axis=1, inplace=True) 
+
+from sklearn.linear_model import LinearRegression
+
+# Fit the model
+model = LinearRegression()
+model.fit(X_train, y_train)
+
+# Get predictions on the test set
+y_pred = model.predict(X_test)
+
+from sklearn.metrics import mean_absolute_error, mean_squared_error
+
+mae = mean_absolute_error(y_test, y_pred)
+mse = mean_squared_error(y_test, y_pred)
+
+print("Mean Absolute Error (MAE):", mae)
+print("Mean Squared Error (MSE):", mse)
+
+from sklearn.linear_model import Ridge, Lasso
+
+# Ridge Regression
+ridge = Ridge(alpha=0.1)  
+ridge.fit(X_train, y_train)
+y_pred_ridge = ridge.predict(X_test)
+
+# Lasso Regression
+lasso = Lasso(alpha=0.1)  
+lasso.fit(X_train, y_train)
+y_pred_lasso = lasso.predict(X_test)
+
+
